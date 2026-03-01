@@ -10,6 +10,10 @@ service:
   port: 3000
   nodePort: 32000
 
+  
+serviceAccount:
+  name: game-app-sa
+
 metrics:
   prometheusScrape: true
   prometheusPort: 3000
