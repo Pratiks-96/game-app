@@ -1,0 +1,15 @@
+replicaCount: 2
+
+image:
+  repository: pratik6958/game-app-crd
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 3000
+  nodePort: 32000
+
+metrics:
+  prometheusScrape: true
+  prometheusPort: 3000
