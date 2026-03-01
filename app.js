@@ -75,13 +75,27 @@ app.get('/play/:number', async (req, res) => {
 app.get('/results', async (req, res) => {
   try {
     const crds = await k8sApi.listNamespacedCustomObject(
-      'games.example.com', 'v1', NAMESPACE, 'gameresults'
+      'games.example.com',
+      'v1',
+      NAMESPACE,
+      'gameresults'
     );
-    const results = crds.body.items.map(item => item.spec);
+
+    const results = crds.body.items.map(item => ({
+      name: item.metadata.name,
+      guess: item.spec.guess,
+      target: item.spec.target,
+      result: item.spec.result,
+      timestamp: item.spec.timestamp
+    }));
+
     res.json(results);
+
   } catch (err) {
-    console.error('Error fetching CRDs:', err.body || err);
-    res.status(500).json({ error: 'Failed to fetch results' });
+    console.error("CRD Fetch Error:", err.body || err);
+    res.status(500).json({
+      error: "Failed to fetch results"
+    });
   }
 });
 app.get('/dashboard', async (req, res) => {
