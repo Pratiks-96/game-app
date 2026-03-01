@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: game-sa
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: game-crd-role
+rules:
+- apiGroups: ["games.example.com"]
+  resources: ["gameresults"]
+  verbs: ["get", "list", "create", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: game-crd-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: game-sa
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: game-crd-role
+  apiGroup: rbac.authorization.k8s.io
