@@ -49,6 +49,18 @@ app.get('/play/:number', async (req, res) => {
 
   res.json({ guess, target, result });
 });
+app.get('/results', async (req, res) => {
+  try {
+    const crds = await k8sApi.listNamespacedCustomObject(
+      'games.example.com', 'v1', NAMESPACE, 'gameresults'
+    );
+    const results = crds.body.items.map(item => item.spec);
+    res.json(results);
+  } catch (err) {
+    console.error('Error fetching CRDs:', err.body || err);
+    res.status(500).json({ error: 'Failed to fetch results' });
+  }
+});
 
 app.get('/metrics', async (req, res) => {
   res.set('Content-Type', promClient.register.contentType);
