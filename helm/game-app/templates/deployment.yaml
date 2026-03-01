@@ -17,12 +17,18 @@ spec:
         prometheus.io/scrape: "{{ .Values.metrics.prometheusScrape }}"
         prometheus.io/port: "{{ .Values.metrics.prometheusPort }}"
     spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
       containers:
         - name: game-app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 3000
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           resources:
             limits:
               cpu: 500m
