@@ -26,29 +26,52 @@ app.get('/', (req, res) => {
 });
 
 app.get('/play/:number', async (req, res) => {
-  const target = Math.floor(Math.random() * 10) + 1;
-  const guess = parseInt(req.params.number);
-  const result = guess === target ? 'You won! 🎉' : `You lost! Target was ${target}`;
-
-  guessesCounter.inc();
-
-  // Store in CRD
-  const crdBody = {
-    apiVersion: 'games.example.com/v1',
-    kind: 'GameResult',
-    metadata: { generateName: 'game-result-' },
-    spec: { guess, target, result }
-  };
   try {
-    await k8sApi.createNamespacedCustomObject(
-      'games.example.com', 'v1', NAMESPACE, 'gameresults', crdBody
-    );
-  } catch (err) {
-    console.error('Error saving CRD:', err.body || err);
-  }
+    const guess = parseInt(req.params.number);
 
-  res.json({ guess, target, result });
+    if (isNaN(guess) || guess < 1 || guess > 10) {
+      return res.status(400).json({
+        error: "Guess must be a number between 1 and 10"
+      });
+    }
+
+    const target = Math.floor(Math.random() * 10) + 1;
+    const result = guess === target
+      ? 'You won! 🎉'
+      : `You lost! Target was ${target}`;
+
+    guessesCounter.inc();
+
+    const crdBody = {
+      apiVersion: 'games.example.com/v1',
+      kind: 'GameResult',
+      metadata: { generateName: 'game-result-' },
+      spec: {
+        guess,
+        target,
+        result,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    await k8sApi.createNamespacedCustomObject(
+      'games.example.com',
+      'v1',
+      NAMESPACE,
+      'gameresults',
+      crdBody
+    );
+
+    res.json({ guess, target, result });
+
+  } catch (err) {
+    console.error("CRD Save Error:", err.body || err);
+    res.status(500).json({
+      error: "Failed to store result"
+    });
+  }
 });
+
 app.get('/results', async (req, res) => {
   try {
     const crds = await k8sApi.listNamespacedCustomObject(
@@ -60,6 +83,92 @@ app.get('/results', async (req, res) => {
     console.error('Error fetching CRDs:', err.body || err);
     res.status(500).json({ error: 'Failed to fetch results' });
   }
+});
+app.get('/dashboard', async (req, res) => {
+  res.send(`
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>Game Results Dashboard</title>
+    <style>
+      body {
+        font-family: Arial;
+        background: #f4f6f8;
+        padding: 20px;
+      }
+      h1 {
+        color: #333;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      th, td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        text-align: center;
+      }
+      th {
+        background: #4CAF50;
+        color: white;
+      }
+      tr:hover {
+        background: #f1f1f1;
+      }
+      button {
+        padding: 10px 15px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+
+    <h1>🎮 Game Results Dashboard</h1>
+
+    <button onclick="loadResults()">Refresh Results</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Guess</th>
+          <th>Target</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="resultsTable"></tbody>
+    </table>
+
+    <script>
+      async function loadResults() {
+        const res = await fetch('/results');
+        const data = await res.json();
+
+        const table = document.getElementById('resultsTable');
+        table.innerHTML = '';
+
+        data.forEach(item => {
+          const row = \`
+            <tr>
+              <td>\${item.guess}</td>
+              <td>\${item.target}</td>
+              <td>\${item.result}</td>
+            </tr>
+          \`;
+          table.innerHTML += row;
+        });
+      }
+
+      loadResults();
+    </script>
+
+  </body>
+  </html>
+  `);
 });
 
 app.get('/metrics', async (req, res) => {
