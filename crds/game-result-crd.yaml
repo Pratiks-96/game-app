@@ -1,0 +1,30 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: gameresults.games.example.com
+spec:
+  group: games.example.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                guess:
+                  type: integer
+                target:
+                  type: integer
+                result:
+                  type: string
+  scope: Namespaced
+  names:
+    plural: gameresults
+    singular: gameresult
+    kind: GameResult
+    shortNames:
+      - gr
