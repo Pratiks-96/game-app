@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "game-app.fullname" . }}
+  labels:
+    app: {{ include "game-app.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "game-app.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "game-app.name" . }}
+      annotations:
+        prometheus.io/scrape: "{{ .Values.metrics.prometheusScrape }}"
+        prometheus.io/port: "{{ .Values.metrics.prometheusPort }}"
+    spec:
+      containers:
+        - name: game-app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 200m
+              memory: 128Mi
