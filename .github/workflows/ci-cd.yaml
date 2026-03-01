@@ -25,24 +25,4 @@ jobs:
           push: true
           tags: pratik6958/game-app-crd:latest
 
-  deploy-argo:
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    steps:
-      - uses: actions/checkout@v3
 
-      - name: Install Argo CD CLI
-        run: |
-          curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x /usr/local/bin/argocd
-
-      - name: Login to Argo CD
-        run: |
-          argocd login 13.232.73.52:8080 \
-            --username ${{ secrets.ARGOCD_USERNAME }} \
-            --password ${{ secrets.ARGOCD_PASSWORD }} \
-            --insecure
-
-      - name: Sync Game App
-        run: |
-          argocd app sync game-app
