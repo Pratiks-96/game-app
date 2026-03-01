@@ -1,0 +1,21 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "game-app.fullname" . }}-role
+rules:
+- apiGroups: ["games.example.com"]
+  resources: ["gameresults"]
+  verbs: ["get", "list", "create", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "game-app.fullname" . }}-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "game-app.fullname" . }}-role
+  apiGroup: rbac.authorization.k8s.io
